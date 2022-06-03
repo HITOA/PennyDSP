@@ -20,4 +20,7 @@
 
 *******************************************************************************/
 
+#include "PennyContainers/PennyAudioBufferView.h"
+
 #include "PennyBasicDSPComponent/PennyDelayLine.h"
+#include "PennyBasicDSPComponent/PennyDryWetMixer.h"
