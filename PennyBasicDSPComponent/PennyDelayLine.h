@@ -68,6 +68,13 @@ namespace Penny {
             }
         }
 
+        /** Get one sample */
+        SampleType GetSample(int channel, int delayInSamples) {
+            jassert(channel >= 0 && channel < audioBuffer.getNumChannels() &&
+                delayInSamples >= 0 && delayInSamples <= audioBuffer.getNumSamples());
+            return audioBuffer.getSample(channel, (currentPosition + audioBuffer.getNumSamples() - delayInSamples) % audioBuffer.getNumSamples());
+        }
+
         /** Get max delay of the delay line. */
         int GetMaxDelay() {
             return audioBuffer.getNumSamples();
