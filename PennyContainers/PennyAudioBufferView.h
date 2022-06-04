@@ -25,7 +25,7 @@ namespace Penny {
 		}
 		/** Create an audio buffer view, viewing a part of the data containing by the audio buffer. */
 		explicit AudioBufferView(juce::AudioBuffer<SampleType>& buffer, int offset, int length) {
-			jassert(buffer.getNumSamples() > offset + length);
+			jassert(buffer.getNumSamples() >= offset + length);
 			numChannels = buffer.getNumChannels();
 			size = length;
 			channels = buffer.getArrayOfWritePointers();
@@ -111,7 +111,7 @@ namespace Penny {
 				SampleType* __restrict data = channels[i];
 				const SampleType* __restrict srcData = src.GetConstChannelPtr(i);
 				for (int j = 0; j < size; j++) {
-					data[offset + j] += srcData;
+					data[offset + j] += srcData[src.offset + j];
 				}
 			}
 		}
@@ -130,7 +130,7 @@ namespace Penny {
 				SampleType* __restrict data = channels[i];
 				const SampleType* __restrict srcData = src.GetConstChannelPtr(i);
 				for (int j = 0; j < size; j++) {
-					data[offset + j] -= srcData;
+					data[offset + j] += srcData[src.offset + j];
 				}
 			}
 		}
@@ -149,7 +149,7 @@ namespace Penny {
 				SampleType* __restrict data = channels[i];
 				const SampleType* __restrict srcData = src.GetConstChannelPtr(i);
 				for (int j = 0; j < size; j++) {
-					data[offset + j] *= srcData;
+					data[offset + j] += srcData[src.offset + j];
 				}
 			}
 		}
@@ -168,7 +168,7 @@ namespace Penny {
 				SampleType* __restrict data = channels[i];
 				const SampleType* __restrict srcData = src.GetConstChannelPtr(i);
 				for (int j = 0; j < size; j++) {
-					data[offset + j] /= srcData;
+					data[offset + j] += srcData[src.offset + j];
 				}
 			}
 		}

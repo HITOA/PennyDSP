@@ -88,8 +88,8 @@ namespace Penny {
 		void Prepare(int sampleRate, int samplesPerBlock) {
 			this->sampleRate = sampleRate;
 			this->samplesPerBlock = samplesPerBlock;
-			Reset();
 			isReady = true;
+			Reset();
 		}
 
 		/** Push sample from input, and pop in output. */
@@ -100,6 +100,9 @@ namespace Penny {
 		}
 
 		void Reset() {
+			if (!isReady)
+				return;
+
 			delayBuffer.setSize(numChannels, maxDelayInSamples + samplesPerBlock);
 			delayBuffer.clear();
 			delayBufferPosition = 0;
