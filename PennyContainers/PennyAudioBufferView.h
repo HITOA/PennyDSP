@@ -50,7 +50,7 @@ namespace Penny {
 			return channels[channel] + offset;
 		}
 		/** Get raw const ptr to the channel. */
-		inline const SampleType* GetConstChannelPtr(int channel) {
+		inline const SampleType* GetConstChannelPtr(int channel) const {
 			jassert(channel < numChannels&& channel > -1);
 			return channels[channel] + offset;
 		}
@@ -81,19 +81,19 @@ namespace Penny {
 		/** Copy sample in src audio buffer view specified channel to this audio buffer view specified channel. */
 		void CopyFrom(int channel, int startOffset, const AudioBufferView<SampleType>& src, int srcChannel, int srcStartOffset, int length) {
 			jassert(channel < numChannels && channel > -1);
-			jassert(startOffset > -1 && startOffset + length < numChannels);
+			jassert(startOffset > -1 && startOffset + length <= size);
 			jassert(srcChannel < src.GetNumChannels() && srcChannel > -1);
 			jassert(srcStartOffset > -1 && srcStartOffset + length < src.GetNumChannels());
 
 			const SampleType* channelData = src.GetConstChannelPtr(srcChannel);
-			memcpy(channels[channel] + startOffset, channelData + srcStartOffset, length);
+			memcpy(channels[channel] + startOffset, channelData + srcStartOffset, sizeof(SampleType) * length);
 		}
 		/** Copy sample in src ptr to this audio buffer view specified channel. */
 		void CopyFrom(int channel, int startOffset, const SampleType* src, int length) {
 			jassert(channel < numChannels&& channel > -1);
-			jassert(startOffset > -1 && startOffset + length < numChannels);
+			jassert(startOffset > -1 && startOffset + length <= size);
 			
-			memcpy(channels[channel] + startOffset, src, length);
+			memcpy(channels[channel] + startOffset, src, sizeof(SampleType) * length);
 		}
 
 		void operator+=(SampleType value) {

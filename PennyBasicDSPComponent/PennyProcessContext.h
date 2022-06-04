@@ -6,6 +6,8 @@ namespace Penny {
 	template<typename sT>
 	struct ProcessContext {
 	public:
+		using SampleType = sT;
+	public:
 		ProcessContext() = delete;
 		ProcessContext(AudioBufferView<sT>& inout) noexcept : input{ inout }, output{ inout }, isInout{ true } {}
 		ProcessContext(const AudioBufferView<sT>& in, AudioBufferView<sT>& out) noexcept : input{ in }, output{ out }, isInout{ false } {}

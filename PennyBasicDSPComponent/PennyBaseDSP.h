@@ -7,6 +7,7 @@ namespace Penny {
 	class BaseDSP {
 	public:
 		virtual void Prepare(int sampleRate, int samplesPerBlock) = 0;
-		virtual void Process(ProcessContext& ctx) = 0;
+		virtual void Process(ProcessContext<sT>& ctx) = 0;
+		virtual void Reset() = 0;
 	};
 }

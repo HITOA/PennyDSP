@@ -1,94 +1,116 @@
 #pragma once
 
+#include <juce_audio_basics/juce_audio_basics.h>
 #include <PennyDSP/PennyBasicDSPComponent/PennyBaseDSP.h>
 
 namespace Penny {
-    template<typename SampleType>
-    class DelayLine {
-    public:
-        DelayLine() : audioBuffer{ 0, 0 } {}
+	template<typename sT>
+	class DelayLine : public BaseDSP<sT> {
+	public:
+		using SampleType = sT;
+	public:
+		/** Construct a delayline with 1 channel and 44110 max delayed samples */
+		DelayLine() {}
+		/** Construct a delayline with specified number of channels and 44110 max delayed samples */
+		DelayLine(int numChannels) : numChannels{ numChannels } {}
+		/** Construct a delayline with specified number of channels and max delayed samples */
+		DelayLine(int numChannels, int maxDelayInSamples) : numChannels{ numChannels }, maxDelayInSamples{ maxDelayInSamples } {}
 
-        explicit DelayLine(int numChannels) : audioBuffer{ numChannels, 0 }, currentPosition{ 0 } {
-            audioBuffer.clear();
-        };
+		/** Set channels number, will reset the delay line. */
+		void SetChannelsNumber(int numChannels) {
+			this->numChannels = numChannels;
+			Reset();
+		}
+		int GetChannelsNumber() {
+			return numChannels;
+		}
 
-        explicit DelayLine(int numChannels, int maxDelayInSamples) : audioBuffer{ numChannels, maxDelayInSamples }, currentPosition{ 0 }  {
-            audioBuffer.clear();
-        }
+		/** Set max delay, will reset the delay line. */
+		void SetMaxDelay(int maxDelayInSamples) {
+			this->maxDelayInSamples = maxDelayInSamples;
+			Reset();
+		}
+		int GetMaxDelay() {
+			return maxDelayInSamples;
+		}
 
-        /**
-         * Push samples in the dellay line audio buffer. 
-         * samples audio buffer must have the same number of channels as the delay audio buffer.
-         * 
-         * \param samples : Audio buffer containing the samples to be pushed.
-         * \param offset : Offset of the sample in the samples audio buffer to be added.
-         * \param length : Number of samples (in the samples audio buffer) to be pushed. (must be less than the delay audio buffer size)
-         */
-        void PushSamples(const juce::AudioBuffer<SampleType>& samples, int offset = 0, int length = 1) {
-            jassert(samples.getNumChannels() == audioBuffer.getNumChannels() && 
-                (offset + length) <= samples.getNumSamples() && length <= audioBuffer.getNumSamples());
-            
-            for (int i = 0; i < audioBuffer.getNumChannels(); i++) {
-                if (currentPosition + length < audioBuffer.getNumSamples()) {
-                    audioBuffer.copyFrom(i, currentPosition, samples, i, offset, length);
-                }
-                else {
-                    audioBuffer.copyFrom(i, currentPosition, samples, i, offset, audioBuffer.getNumSamples() - currentPosition);
-                    audioBuffer.copyFrom(i, 0, samples, i, offset + audioBuffer.getNumSamples() - currentPosition, 
-                        length - audioBuffer.getNumSamples() + currentPosition);
-                }
-            }
+		/** Set current delay used for processing */
+		void SetDelay(int delayInSamples) {
+			jassert(delayInSamples <= maxDelayInSamples);
+			this->delayInSamples = delayInSamples;
+		}
+		int GetDelay() {
+			return delayInSamples;
+		}
 
-            currentPosition = (currentPosition + length) % audioBuffer.getNumSamples();
-        }
+		/** Push samples in the delay line. */
+		void PushSamples(const AudioBufferView<sT>& src) {
+			jassert(isReady);
+			jassert(src.GetNumChannels() >= numChannels);
+			jassert(src.GetNumSamples() <= samplesPerBlock);
 
-        /**
-         * Pop samples in the provided buffer.
-         * Provided buffer must have the same number of channels as the delay audio buffer.
-         * 
-         * \param delayInSamples : delay in samples, 0 is no delay. max is GetMaxDelayInSamples
-         * \param buffer : Buffer wich will receive the samples
-         * \param offset : Buffer offset
-         * \param length : Samples number to be popped
-         */
-        void PopSamples(int delayInSamples, juce::AudioBuffer<SampleType> buffer, int offset = 0, int length = 1) {
-            jassert(delayInSamples >= 0 && delayInSamples <= audioBuffer.getNumSamples() &&
-                (offset + length) <= buffer.getNumSamples() && length <= audioBuffer.getNumSamples() &&
-                audioBuffer.getNumChannels() == buffer.getNumChannels());
+			for (int i = 0; i < numChannels; i++) {
+				const SampleType* data = src.GetConstChannelPtr(i);
+				if (delayBufferPosition + src.GetNumSamples() < delayBuffer.getNumSamples()) {
+					delayBuffer.copyFrom(i, delayBufferPosition, data, src.GetNumSamples());
+				}
+				else {
+					delayBuffer.copyFrom(i, delayBufferPosition, data, delayBuffer.getNumSamples() - delayBufferPosition);
+					delayBuffer.copyFrom(i, 0, data + (delayBuffer.getNumSamples() - delayBufferPosition), 
+						src.GetNumSamples() - (delayBuffer.getNumSamples() - delayBufferPosition));
+				}
+			}
 
-            int startPosition = (currentPosition + audioBuffer.getNumSamples() - delayInSamples) % audioBuffer.getNumSamples();
+			delayBufferPosition = (delayBufferPosition + src.GetNumSamples()) % delayBuffer.getNumSamples();
+		}
+		/** Pop samples from the delay line. */
+		void PopSamples(AudioBufferView<sT>& dst, int delayInSamples) {
+			jassert(isReady);
+			jassert(delayInSamples <= maxDelayInSamples);
+			jassert(dst.GetNumSamples() <= samplesPerBlock);
+			jassert(delayBuffer.getNumChannels() >= dst.GetNumChannels());
 
-            for (int i = 0; i < audioBuffer.getNumChannels(); i++) {
-                if (startPosition + length < audioBuffer.getNumSamples()) {
-                    buffer.copyFrom(i, offset, audioBuffer, i, startPosition, length);
-                }
-                else {
-                    buffer.copyFrom(i, offset, audioBuffer, i, startPosition, audioBuffer.getNumSamples() - startPosition);
-                    buffer.copyFrom(i, offset + audioBuffer.getNumSamples() - startPosition, audioBuffer,
-                        i, 0, length - audioBuffer.getNumSamples() + startPosition);
-                }
-            }
-        }
+			int bufferDelayedPosition = (delayBufferPosition + delayBuffer.getNumSamples() - delayInSamples - dst.GetNumSamples()) % delayBuffer.getNumSamples();
 
-        /** Get one sample */
-        SampleType GetSample(int channel, int delayInSamples) {
-            jassert(channel >= 0 && channel < audioBuffer.getNumChannels() &&
-                delayInSamples >= 0 && delayInSamples <= audioBuffer.getNumSamples());
-            return audioBuffer.getSample(channel, (currentPosition + audioBuffer.getNumSamples() - delayInSamples) % audioBuffer.getNumSamples());
-        }
+			for (int i = 0; i < dst.GetNumChannels(); i++) {
+				const SampleType* data = delayBuffer.getReadPointer(i);
+				if (bufferDelayedPosition + dst.GetNumSamples() < delayBuffer.getNumSamples()) {
+					dst.CopyFrom(i, 0, data + bufferDelayedPosition, dst.GetNumSamples());
+				}
+				else {
+					dst.CopyFrom(i, 0, data + bufferDelayedPosition, delayBuffer.getNumSamples() - bufferDelayedPosition);
+					dst.CopyFrom(i, delayBuffer.getNumSamples() - bufferDelayedPosition, data, 
+						dst.GetNumSamples() - (delayBuffer.getNumSamples() - bufferDelayedPosition));
+				}
+			}
+		}
 
-        /** Get max delay of the delay line. */
-        int GetMaxDelay() {
-            return audioBuffer.getNumSamples();
-        }
+		void Prepare(int sampleRate, int samplesPerBlock) {
+			this->sampleRate = sampleRate;
+			this->samplesPerBlock = samplesPerBlock;
+			Reset();
+			isReady = true;
+		}
 
-        /** Set max delay, will rebuild the audio buffer. */
-        void SetMaxDelay(int maxDelayInSamples) {
-            audioBuffer.setSize(audioBuffer.numChannels, maxDelayInSamples);
-            audioBuffer.clear();
-        }
-    private:
-        int currentPosition;
-        juce::AudioBuffer<SampleType> audioBuffer;
-    };
+		/** Push sample from input, and pop in output. */
+		void Process(ProcessContext<sT>& ctx) {
+			jassert(isReady);
+			PushSamples(ctx.GetInput());
+			PopSamples(ctx.GetOutput(), delayInSamples);
+		}
+
+		void Reset() {
+			delayBuffer.setSize(numChannels, maxDelayInSamples + samplesPerBlock);
+			delayBuffer.clear();
+			delayBufferPosition = 0;
+		}
+	private:
+		bool isReady = false;
+		int numChannels = 1;
+		int maxDelayInSamples = 44110;
+		int sampleRate, samplesPerBlock;
+		int delayBufferPosition = 0;
+		int delayInSamples = 0;
+		juce::AudioBuffer<sT> delayBuffer{};
+	};
 }
