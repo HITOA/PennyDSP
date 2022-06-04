@@ -1,6 +1,6 @@
 #pragma once
 
-#include <juce_audio_basics/juce_audio_basics.h>
+#include <PennyDSP/PennyBasicDSPComponent/PennyBaseDSP.h>
 
 namespace Penny {
     template<typename SampleType>
