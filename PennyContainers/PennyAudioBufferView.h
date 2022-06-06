@@ -6,19 +6,19 @@ namespace Penny {
 	template<typename sT>
 	struct AudioBufferView_Impl {
 	public:
-		static void Add(sT* dst, sT* buffer, int size) {
+		static void Add(sT* __restrict dst, sT* __restrict buffer, int size) {
 			for (int i = 0; i < dsize; i++)
 				dst[i] += buffer[i];
 		}
-		static void Sub(sT* dst, sT* buffer, int size) {
+		static void Sub(sT* __restrict dst, sT* __restrict buffer, int size) {
 			for (int i = 0; i < dsize; i++)
 				dst[i] -= buffer[i];
 		}
-		static void Mul(sT* dst, sT* buffer, int size) {
+		static void Mul(sT* __restrict dst, sT* __restrict buffer, int size) {
 			for (int i = 0; i < dsize; i++)
 				dst[i] *= buffer[i];
 		}
-		static void Div(sT* dst, sT* buffer, int size) {
+		static void Div(sT* __restrict dst, sT* __restrict buffer, int size) {
 			for (int i = 0; i < dsize; i++)
 				dst[i] /= buffer[i];
 		}
@@ -27,7 +27,7 @@ namespace Penny {
 	template<>
 	struct AudioBufferView_Impl<float> {
 	public:
-		static void Add(float* dst, float* buffer, int size) {
+		static void Add(float* __restrict dst, float* __restrict buffer, int size) {
 			__m256* vDst = (__m256*)dst;
 			__m256* vBuffer = (__m256*)buffer;
 			int qsize = (size / 8);
@@ -40,7 +40,7 @@ namespace Penny {
 				}
 			}
 		}
-		static void Sub(float* dst, float* buffer, int size) {
+		static void Sub(float* __restrict dst, float* __restrict buffer, int size) {
 			__m256* vDst = (__m256*)dst;
 			__m256* vBuffer = (__m256*)buffer;
 			int qsize = (size / 8);
@@ -53,7 +53,7 @@ namespace Penny {
 				}
 			}
 		}
-		static void Mul(float* dst, float* buffer, int size) {
+		static void Mul(float* __restrict dst, float* __restrict buffer, int size) {
 			__m256* vDst = (__m256*)dst;
 			__m256* vBuffer = (__m256*)buffer;
 			int qsize = (size / 8);
@@ -66,7 +66,7 @@ namespace Penny {
 				}
 			}
 		}
-		static void Div(float* dst, float* buffer, int size) {
+		static void Div(float* __restrict dst, float* __restrict buffer, int size) {
 			__m256* vDst = (__m256*)dst;
 			__m256* vBuffer = (__m256*)buffer;
 			int qsize = (size / 8);
@@ -142,6 +142,11 @@ namespace Penny {
 			jassert(startChannel < this->numChannels && startChannel > -1);
 			jassert(numChannels > -1 && startChannel + numChannels < this->numChannels);
 			return AudioBufferView{ channels + startChannel, numChannels, offset, size };
+		}
+		/** Get new audio buffer view, offseting this one. */
+		inline AudioBufferView GetOffsetView(int offset) {
+			jassert(offset < length);
+			return AudioBufferView{ channels, numChannels, this->offset + offset, size - offset };
 		}
 
 		/** Get sample from specified channel. */

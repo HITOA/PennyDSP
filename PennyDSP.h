@@ -22,6 +22,9 @@
 
 #include "PennyContainers/PennyAudioBufferView.h"
 
+#include "PennyMath/PennyConvolution.h"
+#include "PennyMath/PennyFFTConvolution.h"
+
 #include "PennyBasicDSPComponent/PennyBaseDSP.h"
 #include "PennyBasicDSPComponent/PennyProcessContext.h"
 #include "PennyBasicDSPComponent/PennyDelayLine.h"
