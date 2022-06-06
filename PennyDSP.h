@@ -29,3 +29,5 @@
 #include "PennyBasicDSPComponent/PennyProcessContext.h"
 #include "PennyBasicDSPComponent/PennyDelayLine.h"
 #include "PennyBasicDSPComponent/PennyDryWetMixer.h"
+#include "PennybasicDSPComponent/PennyCombFilter.h"
+#include "PennybasicDSPComponent/PennyAllPassFilter.h"
