@@ -166,7 +166,7 @@ namespace Penny {
 			jassert(channel < numChannels && channel > -1);
 			jassert(startOffset > -1 && startOffset + length <= size);
 			jassert(srcChannel < src.GetNumChannels() && srcChannel > -1);
-			jassert(srcStartOffset > -1 && srcStartOffset + length < src.GetNumChannels());
+			jassert(srcStartOffset > -1 && srcStartOffset + length <= src.GetNumSamples());
 
 			const SampleType* channelData = src.GetConstChannelPtr(srcChannel);
 			memcpy(channels[channel] + startOffset, channelData + srcStartOffset, sizeof(SampleType) * length);

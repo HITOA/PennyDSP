@@ -48,12 +48,12 @@ namespace Penny {
 				return;
 
 			delayLine.Reset();
+			feedbackBuffer.clear();
 		};
 	private:
 		bool isReady = false;
 		int numChannels = 1;
 		int maxDelayInSamples = 44110;
-		int sampleRate, samplesPerBlock;
 		int delayInSamples = 0;
 		float feedbackGain = 0.5f;
 		DelayLine<sT> delayLine{};
