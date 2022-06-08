@@ -8,3 +8,5 @@ I tried to redo from scratch everything, so even if i could use the juce_dsp mod
 One source that helped me a lot for developing this plugin : https://valhalladsp.com/2009/05/30/schroeder-reverbs-the-forgotten-algorithm/
 
 A lot of the DSP code part is in the PennyDSP module (locally copied) so go right here if you want to see it : https://github.com/HITOA/PennyDeepReverb/tree/main/JuceLibraryCode/modules/PennyDSP
+
+There is nothing deep about this reverb btw, sadly D:
