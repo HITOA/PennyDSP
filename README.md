@@ -6,3 +6,5 @@ My first audio plugin. it's not good, but i am learning and still pretty happy w
 I tried to redo from scratch everything, so even if i could use the juce_dsp module to do the plugin, i prefer not to, cz i'm learning.
 
 One source that helped me a lot for developing this plugin : https://valhalladsp.com/2009/05/30/schroeder-reverbs-the-forgotten-algorithm/
+
+A lot of the DSP code part is in the PennyDSP module (locally copied) so go right here if you want to see it : https://github.com/HITOA/PennyDeepReverb/tree/main/JuceLibraryCode/modules/PennyDSP
